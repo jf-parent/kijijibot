@@ -1,0 +1,18 @@
+browserstack: 'http://username:key@hub.browserstack.com:80/wd/hub'
+username: ''
+pw: ''
+dev: True
+ads: [
+    {
+        'enabled': True,
+        'title': 'test',
+        'desc': 'test',
+        'address': 'test',
+    },
+    {
+        'enabled': False,
+        'title': 'test',
+        'desc': 'test',
+        'address': 'test',
+    }
+]
