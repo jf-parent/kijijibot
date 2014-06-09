@@ -13,16 +13,19 @@ except ImportError:
     print 'IPython is not installed'
 
 xpath = {}
+xpath['ads_page_btn'] = "//a[contains(text(), 'Mon Kijiji')]"
 xpath['login_page_btn'] = "//a[contains(text(), 'Ouvrir une session')]"
 xpath['email_input'] = "//input[@class = 'kdd_email']"
 xpath['pw_input'] = "//input[@name = 'Password']"
 xpath['login_btn'] = "//input[@id = 'signinbtn']"
 xpath['ads_category_btn'] = "//a[contains(text(), 'vente, vente de détail')]"
-xpath['post_ads_page_btn'] = "//input[@id = 'PostAd']"
-xpath['post_ads_btn'] = "//a[@id = 'PostAdLink']"
+xpath['post_ads_btn'] = "//input[@id = 'PostAd']"
+xpath['post_ads_page_btn'] = "//a[contains(@class, 'button-open')]"
 xpath['ad_title'] = "//input[@name = 'Title']"
-xpath['ad_desc'] = "//input[@name = 'Description']"
-xpath['ad_address'] = "//input[@name = 'Description']"
+xpath['ad_desc'] = "//textarea[@name = 'Description']"
+xpath['ad_address'] = "//input[@name = 'MapAddress']"
+xpath['videos_input'] = "//input[@name = 'AdVideoUrl']"
+xpath['ad_delete_btn'] = "//a[@title = 'Supprimer']"
 
 class Kijijibot():
 
@@ -35,7 +38,7 @@ class Kijijibot():
         print 'ads', self.ads
 
         if self.config.get('dev'):
-            self.driver = webdriver.Firefox()
+            self.driver = webdriver.Chrome()
             self.driver.set_window_position(0,0)
             self.driver.set_window_size(1650,725)
         else:
@@ -77,8 +80,6 @@ class Kijijibot():
 
         self.logout()
 
-        embed()
-
     def login(self):
         self.find_and_click(xpath['login_page_btn'])
 
@@ -90,14 +91,28 @@ class Kijijibot():
         self.find_and_click(xpath['login_btn'])
 
     def go_to_the_ads_page(self):
-        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH,xpath['post_ads_btn'])))
-
-        self.find_and_click(xpath['post_ads_btn'])
+        self.driver.get("http://montreal.kijiji.ca/c-SelectCategory")
 
         WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH,xpath['ads_category_btn'])))
 
     def delete_ads(self):
-        pass
+        self.go_to_home()
+
+        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH,xpath['ads_page_btn'])))
+
+        self.find_and_click(xpath['ads_page_btn'])
+
+        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH,"//div[contains(text(), 'Mes annonces')]")))
+
+        del_btns = self.driver.find_elements_by_xpath(xpath['ad_delete_btn'])
+
+        for del_btn in del_btns:
+            self.driver.find_element_by_id(del_btn.get_attribute('id')).click()
+
+            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH,"//div[contains(text(), 'Supprimer l')]")))
+
+            self.driver.execute_script("document.getElementsByName('SurveyResponse')[3].checked = true")
+            self.driver.execute_script("document.getElementById('ManageMyAdsDeleteForm').submit()")
 
     def go_to_home(self):
         self.driver.get(self.base_url)
@@ -135,10 +150,11 @@ class Kijijibot():
             #Terms of use
             self.driver.execute_script("document.getElementById('TermsCheck').checked = true")
 
-            embed()
+            #Videos
+            self.driver.find_element_by_xpath(xpath['videos_input']).clear()
 
             #Post
-            self.find_and_click(xpath['post_ads_btn'])
+            self.driver.execute_script("document.getElementById('MainForm').submit()")
         
 
     def logout(self):
